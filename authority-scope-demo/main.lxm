@@ -1,17 +1,19 @@
 domain NamespaceTask {
-  scope Namespace
+  scope { domain }
+  capability { messaging, send_to:NamespaceTask }
 
   state {
     status: string
   }
 
   goal Completed {
-    predicate status == "done"
+    target status == "done"
   }
 
   transition Execute {
-    step {
-      emit RunScopedAction()
+    capability { messaging, send_to:NamespaceTask }
+    slice step {
+      send("NamespaceTask", "RunScopedAction")
     }
   }
 }

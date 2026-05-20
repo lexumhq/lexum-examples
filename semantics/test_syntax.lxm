@@ -1,9 +1,11 @@
 domain Testing {
+    scope { domain }
+
     state {
-        val : string
+        val : int
     }
 
     goal Pure {
-        target == 3 // Missing target predicate and invalid assignment
+        target val == 3
     }
 }

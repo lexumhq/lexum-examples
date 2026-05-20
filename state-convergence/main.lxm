@@ -1,22 +1,24 @@
 domain Deployment {
+  scope { domain }
+
   state {
-    configured: bool
-    running: bool
+    configured: int
+    running: int
   }
 
   goal Healthy {
-    predicate configured == true && running == true
+    target configured + running == 2
   }
 
   transition Configure {
-    step {
-      configured = true
+    slice step {
+      configured = 1
     }
   }
 
   transition Start {
-    step {
-      running = true
+    slice step {
+      running = 1
     }
   }
 }

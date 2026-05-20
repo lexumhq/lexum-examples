@@ -3,12 +3,14 @@ environment LocalNode {
 }
 
 domain Producer {
+    scope { domain }
+    
     state {
         status: string
     }
 
     goal Initialize {
-        target status = "active"
+        target status == "active"
     }
 
     transition Boot {

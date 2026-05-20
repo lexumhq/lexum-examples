@@ -1,27 +1,31 @@
 domain ExternalTask {
+  scope { domain }
+  capability { messaging, send_to:ExternalTask }
+
   state {
     completed: bool
     retries: int
   }
 
   goal Finished {
-    predicate completed == true
+    target completed == true
   }
 
   transition Attempt {
-    step {
-      emit PerformTask()
+    capability { messaging, send_to:ExternalTask }
+    slice step {
+      send("ExternalTask", "PerformTask")
     }
   }
 
   transition FailureObserved {
-    step {
+    slice step {
       retries = retries + 1
     }
   }
 
   transition SuccessObserved {
-    step {
+    slice step {
       completed = true
     }
   }
