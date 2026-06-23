@@ -1,0 +1,116 @@
+domain Bank {
+    scope { domain }
+    capability { messaging, send_to:Alice, send_to:Bob }
+
+    state {
+        alice_balance: int
+        bob_balance: int
+    }
+
+    invariant ConserveMoney {
+        alice_balance + bob_balance == 100
+    }
+
+    goal Balanced {
+        priority 100
+        target alice_balance > 0
+        strategy { Boot }
+    }
+
+    transition Boot {
+        capability { messaging, send_to:Alice, send_to:Bob }
+        slice step {
+            alice_balance = 50
+            bob_balance = 50
+        }
+    }
+
+    transition ProcessTransferToBob {
+        capability { messaging, send_to:Alice, send_to:Bob }
+        slice step {
+            alice_balance = alice_balance - 10
+            bob_balance = bob_balance + 10
+        }
+    }
+
+    transition ProcessTransferToAlice {
+        capability { messaging, send_to:Alice, send_to:Bob }
+        slice step {
+            bob_balance = bob_balance - 10
+            alice_balance = alice_balance + 10
+        }
+    }
+}
+
+domain Alice {
+    scope { domain }
+    capability { messaging, send_to:Bank }
+    
+    state {
+        tx_count: int
+    }
+
+    goal MaxTx {
+        priority 50
+        target tx_count == 5
+        strategy { SendMoney }
+    }
+
+    transition Boot {
+        capability { messaging, send_to:Bank }
+        slice step {
+            tx_count = 0
+        }
+    }
+
+    transition SendMoney {
+        capability { messaging, send_to:Bank }
+        slice step {
+            tx_count = tx_count + 1
+            send("Bank", "ProcessTransferToBob")
+        }
+    }
+}
+
+domain Bob {
+    scope { domain }
+    capability { messaging, send_to:Bank }
+    
+    state {
+        tx_count: int
+    }
+
+    goal MaxTx {
+        priority 50
+        target tx_count == 5
+        strategy { SendMoney }
+    }
+
+    transition Boot {
+        capability { messaging, send_to:Bank }
+        slice step {
+            tx_count = 0
+        }
+    }
+
+    transition SendMoney {
+        capability { messaging, send_to:Bank }
+        slice step {
+            tx_count = tx_count + 1
+            send("Bank", "ProcessTransferToAlice")
+        }
+    }
+}
+
+system Network {
+    start domain Bank {
+        alice_balance = 50
+        bob_balance = 50
+    }
+    start domain Alice {
+        tx_count = 0
+    }
+    start domain Bob {
+        tx_count = 0
+    }
+}

@@ -1,0 +1,43 @@
+domain Malicious {
+    scope { domain }
+    capability { messaging, send_to:Malicious }
+
+    state {
+        val: int
+    }
+
+    invariant SelfDestruct {
+        val == 0
+    }
+
+    goal BreakInvariant {
+        priority 100
+        target val == 999
+        strategy { Mutate }
+    }
+
+    transition Boot {
+        capability { messaging, send_to:Malicious }
+        slice step {
+            val = 0
+        }
+    }
+
+    transition Mutate {
+        capability { messaging, send_to:Malicious }
+        slice step {
+            val = 999
+            send("Malicious", "Mutate")
+            send("Malicious", "Mutate")
+            send("Malicious", "Mutate")
+            send("Malicious", "Mutate")
+            send("Malicious", "Mutate")
+        }
+    }
+}
+
+system Main {
+    start domain Malicious {
+        val = 0
+    }
+}

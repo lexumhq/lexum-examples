@@ -1,0 +1,112 @@
+domain NodeA {
+    scope { domain }
+    capability { messaging, send_to:NodeB, send_to:NodeC }
+
+    state {
+        val: int
+    }
+
+    goal Stable {
+        priority 50
+        target val == 100
+        strategy { Boot }
+    }
+
+    transition Boot {
+        capability { messaging, send_to:NodeB, send_to:NodeC }
+        slice step {
+            val = val + 1
+            send("NodeB", "Propagate")
+            send("NodeC", "Propagate")
+        }
+    }
+
+    transition Propagate {
+        capability { messaging, send_to:NodeB, send_to:NodeC }
+        slice step {
+            val = val + 1
+            if val < 100 {
+                send("NodeB", "Propagate")
+                send("NodeC", "Propagate")
+            }
+        }
+    }
+}
+
+domain NodeB {
+    scope { domain }
+    capability { messaging, send_to:NodeA, send_to:NodeC }
+    
+    state {
+        val: int
+    }
+
+    goal Stable {
+        priority 50
+        target val == 100
+        strategy { Boot }
+    }
+
+    transition Boot {
+        capability { messaging, send_to:NodeA, send_to:NodeC }
+        slice step {
+            val = val + 1
+        }
+    }
+
+    transition Propagate {
+        capability { messaging, send_to:NodeA, send_to:NodeC }
+        slice step {
+            val = val + 1
+            if val < 100 {
+                send("NodeA", "Propagate")
+                send("NodeC", "Propagate")
+            }
+        }
+    }
+}
+
+domain NodeC {
+    scope { domain }
+    capability { messaging, send_to:NodeA, send_to:NodeB }
+    
+    state {
+        val: int
+    }
+
+    goal Stable {
+        priority 50
+        target val == 100
+        strategy { Boot }
+    }
+
+    transition Boot {
+        capability { messaging, send_to:NodeA, send_to:NodeB }
+        slice step {
+            val = val + 1
+        }
+    }
+
+    transition Propagate {
+        capability { messaging, send_to:NodeA, send_to:NodeB }
+        slice step {
+            val = val + 1
+            if val < 100 {
+                send("NodeA", "Propagate")
+                send("NodeB", "Propagate")
+            }
+        }
+    }
+}
+
+system Network {
+    start domain NodeA {
+        val = 0
+    }
+    start domain NodeB {
+        val = 0
+    }
+    start domain NodeC {
+        val = 0
+    }
+}

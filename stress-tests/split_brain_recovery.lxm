@@ -1,0 +1,106 @@
+domain NodeA {
+    scope { domain }
+    capability { messaging, send_to:NodeB }
+
+    state {
+        val: int
+        partitioned: bool
+    }
+
+    invariant ValLimit {
+        val < 200
+    }
+
+    goal TargetValue {
+        priority 100
+        target val == 100
+        strategy { Generate }
+    }
+
+    transition Boot {
+        capability { messaging, send_to:NodeB }
+        slice step {
+            val = 0
+            partitioned = true
+        }
+    }
+
+    transition Generate {
+        capability { messaging, send_to:NodeB }
+        slice step {
+            val = val + 10
+            if val == 50 {
+                partitioned = false
+            }
+            if partitioned == false {
+                send("NodeB", "Sync")
+            }
+        }
+    }
+
+    transition Sync {
+        capability { messaging, send_to:NodeB }
+        slice step {
+            val = val + 5
+        }
+    }
+}
+
+domain NodeB {
+    scope { domain }
+    capability { messaging, send_to:NodeA }
+
+    state {
+        val: int
+        partitioned: bool
+    }
+
+    invariant ValLimit {
+        val < 200
+    }
+
+    goal TargetValue {
+        priority 100
+        target val == 100
+        strategy { Generate }
+    }
+
+    transition Boot {
+        capability { messaging, send_to:NodeA }
+        slice step {
+            val = 0
+            partitioned = true
+        }
+    }
+
+    transition Generate {
+        capability { messaging, send_to:NodeA }
+        slice step {
+            val = val + 10
+            if val == 50 {
+                partitioned = false
+            }
+            if partitioned == false {
+                send("NodeA", "Sync")
+            }
+        }
+    }
+
+    transition Sync {
+        capability { messaging, send_to:NodeA }
+        slice step {
+            val = val + 5
+        }
+    }
+}
+
+system Main {
+    start domain NodeA {
+        val = 0
+        partitioned = true
+    }
+    start domain NodeB {
+        val = 0
+        partitioned = true
+    }
+}

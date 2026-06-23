@@ -1,0 +1,70 @@
+domain A {
+    scope { domain }
+    capability { messaging, send_to:B }
+
+    state {
+        x: int
+    }
+
+    goal WantsOne {
+        priority 100
+        target x == 1
+        strategy { SetOne }
+    }
+
+    transition Boot {
+        capability { messaging, send_to:B }
+        slice step {
+            x = 0
+            send("B", "SetZero")
+        }
+    }
+
+    transition SetOne {
+        capability { messaging, send_to:B }
+        slice step {
+            x = 1
+            send("B", "SetZero")
+        }
+    }
+}
+
+domain B {
+    scope { domain }
+    capability { messaging, send_to:A }
+
+    state {
+        x: int
+    }
+
+    goal WantsZero {
+        priority 100
+        target x == 0
+        strategy { SetZero }
+    }
+
+    transition Boot {
+        capability { messaging, send_to:A }
+        slice step {
+            x = 1
+            send("A", "SetOne")
+        }
+    }
+
+    transition SetZero {
+        capability { messaging, send_to:A }
+        slice step {
+            x = 0
+            send("A", "SetOne")
+        }
+    }
+}
+
+system Test {
+    start domain A {
+        x = 0
+    }
+    start domain B {
+        x = 1
+    }
+}
